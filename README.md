@@ -1,33 +1,52 @@
 # Speedmap
 
-A static, independent app for comparing internet speed at spots on your own floor plan.
+**Find out whether a different router, access point, or connection improves the rooms you use.** Speedmap runs a live internet speed test and lets you repeat it at the same spots on a floor plan. The comparison puts both sets of results side by side, room by room.
 
-![Speedmap desktop view with an empty map](docs/desktop.png)
+[Open Speedmap](https://bad33ndj3.github.io/speedmap/)
 
-[See the mobile view](docs/mobile.png)
+## Test your connection
+
+Open **Speed test** and select **Run speed test** to test your current connection. Download and upload speeds update as the test runs, alongside latency and jitter when available. Quick tests stay on screen until you run another test or leave the page.
+
+## Compare two setups
+
+1. **Draw up your route.** Choose a floor plan image and add a spot for each place you want to test. A screenshot or photo works. Rename spots to match the rooms. Drag markers to adjust their positions.
+2. **Name both setups.** For example, use “Router in hallway” and “Router in living room.” Stand at the selected spot and connect to the setup shown before starting the test.
+3. **Repeat the route.** After each test, Speedmap suggests the next unmeasured spot. After the first round, it suggests the second setup. Switch networks or change your setup before you start that round.
+4. **Open the comparison.** Read separate download, upload, and ping charts for each room. Each metric uses a common scale across rooms, and the signed change is the second setup minus the first. Open **All measurements** for latency under load. Speedmap uses the latest test for each spot and setup. **Copy report** includes the comparison and the full measurement history.
+
+For a fair comparison, use the same device and stand in the same places for both rounds.
+
+![Example comparison with separate download, upload, and ping charts for two rooms](docs/comparison.png)
+
+## Keep, move, or clear your map
+
+Your plan, spots, and saved measurements are restored when you reopen Speedmap in the same browser. Open **Move or back up your map** to download a backup. Select **Clear floor plan** from the same menu to start over. Keep a backup before clearing the map or replacing it with another plan. Both actions remove the old spots and measurements after confirmation.
+
+On desktop, **Open on phone** shows a code your phone can scan to open the page. To continue with the same map, download a backup on the original device and select **Restore backup** on the phone. Restoring a backup replaces the data already in that browser.
+
+## What leaves your device
+
+Speedmap stores your map and its history in your browser. A test sends traffic and measurement results to Cloudflare through its [open-source speed test engine](https://github.com/cloudflare/speedtest), loaded from jsDelivr. A test can use hundreds of megabytes. The copied report includes test timestamps and browser details, so review it before sharing.
+
+Browser storage can run out or be cleared. If saving a measurement fails, download a backup while the page is still open.
 
 ## Run locally
 
-Run `python3 -m http.server 8000` from this directory, then visit `http://localhost:8000/`. No build or account is needed. For the measurement itself the browser needs internet access.
+From the repository directory, start a static server and open [localhost:8000](http://localhost:8000/). A live test requires internet access.
 
-Choose a PNG, JPEG, WebP or GIF image, add named spots, and drag each marker into place. Rotate the map if needed; markers rotate with it. Give both comparison labels your own names. Measure every spot on the first connection, switch connections, and repeat. The app retains every measurement; the page compares the most recent measurement for each spot. Copy for agent includes the comparison and all detailed results. If copying is unavailable, select the displayed text manually. Export JSON for a backup and import it to restore your map and measurements; importing replaces current data.
+```sh
+python3 -m http.server 8000
+```
 
-## Privacy and storage
+Run the automated checks with Node.js 22. The tests use simulated measurements and send no test traffic.
 
-The image, spots and results are stored in this browser's local storage and are not sent to a Speedmap server. Browser storage can be cleared or evicted; export backups. Large images can exceed the browser quota. When saving fails the existing stored data is preserved and a warning is shown. A completed measurement that cannot be saved remains in memory until the page closes: export it immediately.
+```sh
+node --test tests/*.test.mjs
+```
 
-A measurement uses the official [Cloudflare speed test engine](https://github.com/cloudflare/speedtest), version 1.17.0, loaded from jsDelivr. Cloudflare receives test traffic and completed measurement results. A test can use hundreds of megabytes. The report includes the browser user agent and timestamps; review it before sharing. Browsers cannot reliably provide Wi-Fi signal, band or network name, so these are not measured. Speedmap is not affiliated with Cloudflare.
-
-## GitHub Pages preparation
-
-All application paths are relative and work under a repository subpath. The GitHub Actions workflow checks the application and deploys the static site to GitHub Pages when changes reach the main branch. Set the Pages source to GitHub Actions in repository settings. Test the actual Pages URL and mobile Safari after deployment; local testing does not establish those work.
-
-## Checks
-
-Run `node --test tests/*.test.mjs` for deterministic engine tests. No real test traffic is sent by those tests.
-
-On desktop, **Open on phone** shows a QR code for the current page address. It does not transfer data: export a JSON backup and import it on the phone. Localhost addresses only work on the same device. The QR code is generated locally using qrcode-generator 1.4.4 (MIT), included in `vendor/`.
+The [GitHub Pages workflow](.github/workflows/pages.yml) runs these checks and publishes the static files when changes reach `main`.
 
 ## License
 
-MIT licensed; see [LICENSE](LICENSE). The included QR library has its own [license](vendor/LICENSE-qrcode.txt).
+Speedmap is independent of Cloudflare and released under the [MIT License](LICENSE). QR codes are generated locally using [qrcode-generator](vendor/LICENSE-qrcode.txt), also under the MIT License.

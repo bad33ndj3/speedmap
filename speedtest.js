@@ -14,6 +14,13 @@ export function createSpeedTestController({
   const finite = value => typeof value === 'number' && Number.isFinite(value);
   const ms = value => finite(value) && value >= 0 ? Math.round(value * 10) / 10 : null;
   const mbps = value => finite(value) && value > 0 ? Math.round(value / 1e4) / 100 : null;
+  function readings(raw) {
+    const loaded = [ms(raw.downLoadedLatency), ms(raw.upLoadedLatency)].filter(value => value > 0);
+    return {
+      down: mbps(raw.download), up: mbps(raw.upload), ping: ms(raw.latency),
+      loaded: loaded.length ? Math.max(...loaded) : null,
+    };
+  }
   function finish(run, result) {
     if (run.settled) return;
     run.settled = true;
@@ -34,7 +41,13 @@ export function createSpeedTestController({
       const engine = new SpeedTest({ autoStart: false, measureDownloadLoadedLatency: true, measureUploadLoadedLatency: true });
       run.engine = engine;
       engine.onResultsChange = ({ type } = {}) => {
-        if (!run.settled && type) status(`Measuring ${type}…`);
+        if (run.settled) return;
+        const summary = engine.results?.getSummary() || {};
+        target.dispatchEvent(new CustomEvent('speedtest-progress', {
+          detail: { ...readings(summary), details: { summary } },
+        }));
+        const phase = { latency: 'latency', download: 'download speed', upload: 'upload speed', packetLoss: 'packet loss' }[type];
+        if (phase) status(`Measuring ${phase}…`);
       };
       engine.onError = (message, code) => {
         run.lastError = code ? `${message} (HTTP ${code})` : String(message);
@@ -51,11 +64,9 @@ export function createSpeedTestController({
               scores = Object.fromEntries(Object.entries(rawScores).filter(([, value]) => value && typeof value === 'object').map(([key, value]) => [key, { points: value.points, classificationIdx: value.classificationIdx, classificationName: value.classificationName }]));
             }
           } catch { /* Scores are optional. */ }
-          const loadedValues = [ms(raw.downLoadedLatency), ms(raw.upLoadedLatency)].filter(v => v !== null);
           const detail = {
             spotId: run.spotId, network: run.network,
-            down: mbps(raw.download), up: mbps(raw.upload), ping: ms(raw.latency),
-            loaded: loadedValues.length ? Math.max(...loadedValues) : null,
+            ...readings(raw),
             details: {
               engine: `@cloudflare/speedtest@${VERSION}`,
               measuredAt: new Date(now()).toISOString(),
@@ -81,12 +92,12 @@ export function createSpeedTestController({
     }
   }
   function runSpeedTestForSpot({ spotId, network } = {}) {
-    if (typeof spotId !== 'string' || !spotId.trim() || typeof network !== 'string' || !network.trim()) {
+    if ((spotId !== null && (typeof spotId !== 'string' || !spotId.trim())) || typeof network !== 'string' || !network.trim()) {
       throw new TypeError('A spot and provider are required');
     }
     if (active) { status('A measurement is already running.'); return Promise.resolve(null); }
     if (!confirm()) { status('Measurement cancelled.'); return Promise.resolve(null); }
-    const run = { spotId: spotId.trim(), network: network.trim(), started: now(), settled: false };
+    const run = { spotId: spotId?.trim() ?? null, network: network.trim(), started: now(), settled: false };
     active = run;
     const promise = new Promise(resolve => { run.resolve = resolve; });
     start(run);
