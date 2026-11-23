@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Compare internet speeds across your own floor plan.">
+  <title>Speedmap — compare your connection</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./vendor/qrcode.js" defer></script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="Speedmap home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2"/><path d="M16 16 23 10M8 20a9 9 0 0 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg></span> Speedmap</a>
+      <div class="header-actions"><button id="open-qr" class="phone-link" type="button" aria-haspopup="dialog"><span aria-hidden="true">▦</span> Open on phone</button>
+      <span id="storage-status" class="save-status" role="status" aria-live="polite">Saved on this device</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <h1 id="page-title">A better view of your connection.</h1>
+        <p class="lead">One map. Your spots. A clearer comparison.</p>
+      </div>
+      <div class="intro-note"><span aria-hidden="true">◉</span><p>Your map and saved results stay on this device. Test traffic and results are sent to Cloudflare.</p></div>
+    </section>
+
+    <div class="workspace">
+      <section class="panel plan-panel" aria-labelledby="plan-title">
+        <div class="section-heading">
+          <div><p class="step">Step 1 · Your map</p><h2 id="plan-title">Where will you measure?</h2></div>
+          <label class="button button-secondary file-button" for="floorplan-input">Choose image</label>
+          <input class="visually-hidden" id="floorplan-input" type="file" accept="image/*">
+        </div>
+        <p class="hint">Add your floor plan, then place a marker wherever you want to measure.</p>
+        <div class="map-shell">
+          <div id="map" class="map" aria-label="Floor plan">
+            <div id="map-empty" class="map-empty"><span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 56 56" fill="none"><path d="M9 16 21 10l14 6 12-6v30l-12 6-14-6-12 6V16Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M21 10v30m14-24v30" stroke="currentColor" stroke-width="2"/><circle cx="28" cy="26" r="5" fill="currentColor"/><circle cx="28" cy="26" r="2" fill="white"/></svg></span><strong>Your map starts here</strong><span>Choose a floor plan image to place your measurement spots.</span></div>
+            <img id="map-image" alt="Your floor plan" hidden>
+            <div id="map-markers" class="map-markers"></div>
+          </div>
+        </div>
+        <div class="map-actions"><button id="add-spot" class="button button-secondary" type="button">+ Add spot</button><button id="rotate-map" class="button button-quiet" type="button" disabled>↻ Rotate map</button><span>Drag a marker to move it.</span></div>
+        <div id="spots-list" class="spots-list" aria-label="Measurement spots"></div>
+      </section>
+
+      <div class="side-column">
+        <section class="panel measure-panel" aria-labelledby="measure-title">
+          <div class="section-heading"><div><p class="step">Step 2 · Measure</p><h2 id="measure-title">Make your comparison</h2></div></div>
+          <p class="hint">Name what you want to compare. Measure every spot with the first, then repeat with the second.</p>
+          <div class="provider-grid">
+            <label>First label<input id="provider-a" type="text" value="Connection A" maxlength="80"></label>
+            <label>Second label<input id="provider-b" type="text" value="Connection B" maxlength="80"></label>
+          </div>
+          <div class="measure-controls">
+            <label>Spot<select id="selected-spot"></select></label>
+            <label>Compare label<select id="selected-provider"><option value="a">Connection A</option><option value="b">Connection B</option></select></label>
+          </div>
+          <button id="start-test" class="button button-primary" type="button">Start measurement</button>
+          <button id="cancel-test" class="button button-quiet" type="button" hidden>Cancel measurement</button>
+          <p class="service-notice">Measurements use Cloudflare. Test traffic and results are sent to Cloudflare.</p>
+          <p id="test-status" class="test-status" role="status" aria-live="polite">Choose a spot to get started.</p>
+          <div class="privacy-note"><strong>Before you measure</strong><p>A test can use hundreds of megabytes. Use an unmetered connection where possible.</p></div>
+        </section>
+        <section class="panel data-panel" aria-labelledby="data-title">
+          <div class="section-heading"><div><p class="step">Your data</p><h2 id="data-title">Keep or share your results</h2></div></div>
+          <p class="hint">Save a backup or copy the complete comparison for an assistant.</p>
+          <div class="data-actions">
+            <button id="copy-report" class="button button-secondary" type="button">Copy for agent</button>
+            <button id="export-json" class="button button-quiet" type="button">Export JSON</button>
+            <label class="button button-quiet file-button" for="import-json">Import JSON</label>
+            <input class="visually-hidden" id="import-json" type="file" accept="application/json,.json">
+          </div>
+          <div id="report-fallback" hidden><label for="report-text">Select and copy your report</label><textarea id="report-text" rows="8" readonly></textarea></div>
+        </section>
+      </div>
+    </div>
+
+    <section class="panel results-panel" aria-labelledby="results-title">
+      <div class="section-heading"><div><p class="step">Your comparison</p><h2 id="results-title">See the difference</h2></div><span class="results-units">Speed in Mbps · latency in ms</span></div>
+      <div id="results"><p class="hint">Your measurements will appear here.</p></div>
+    </section>
+    <footer>Speedmap is an independent project and is not affiliated with Cloudflare.</footer>
+    <dialog id="qr-dialog" aria-labelledby="qr-title">
+      <div class="qr-dialog-head"><h2 id="qr-title">Open on your phone</h2><button id="close-qr" class="close-qr" type="button" aria-label="Close">×</button></div>
+      <p>Scan this code with your phone’s camera.</p>
+      <div id="qr-code" class="qr-code" role="img" aria-label="QR code for this page"></div>
+      <p id="qr-url" class="qr-url"></p>
+      <p class="qr-note"><strong>Your map stays on this device.</strong> To move it, export a backup here and import it on your phone.</p>
+      <p id="qr-local-warning" class="qr-warning" hidden>This local address may not be reachable from your phone. Use a public address or a local network address instead.</p>
+    </dialog>
+  </main>
+</body>
+</html>
